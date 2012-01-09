@@ -7,30 +7,25 @@
 #
 #  You will need to install Pygments for syntax coloring
 #
-#    $ sudo easy_install pygments
+#    $ pip install pygments
 #
-#  Install the gems redcarpet, albino, and nokogiri
+#  Install the gems rdiscount, albino, and nokogiri
 #
 #  To work with http://markedapp.com/ I also had to
 #    $ sudo ln -s /usr/local/bin/pygmentize /usr/bin
 #
 require 'rubygems'
-require 'redcarpet'
+require 'rdiscount'
 require 'albino'
 require 'nokogiri'
 
 def markdown(text)
-  options = [:fenced_code,:generate_toc,:hard_wrap,:no_intraemphasis,:strikethrough,:gh_blockcode,:autolink,:xhtml,:tables]
-  html = Redcarpet.new(text, *options).to_html 
-  syntax_highlighter(html)
-end
-
-def syntax_highlighter(html)
-  doc = Nokogiri::HTML(html)
-  doc.search("//pre[@lang]").each do |pre|
-    pre.replace Albino.colorize(pre.text.rstrip, pre[:lang])
+  options = [:smart,]
+  # Replace {% highlight lang [linenos] %}<data>{% endhighlight %} with colourised code.
+  text.gsub!(/\{% highlight (.+?) (linenos)? ?%\}(.*?)\{% endhighlight %\}/m) do |match|
+    Albino.colorize($3, $1).to_s
   end
-  doc.at_css("body").inner_html.to_s
+  RDiscount.new(text, *options).to_html 
 end
 
 puts markdown(ARGF.read)
